@@ -3,7 +3,7 @@ require_relative "../lib/player"
 
 
 class Board
-    attr_accessor :grid, :p1, :p2
+    attr_accessor :grid, :p1, :p2, :current_player
 
     def initialize
         @grid = Array.new(8) { Array.new(8,  '_') }
@@ -11,6 +11,22 @@ class Board
         @p2 = Player.new('black')
         self.player_pieces(@p1)
         self.player_pieces(@p2)
+        @current_player = @p1
+    end
+
+    def switch_turn
+        if @current_player = self.p1
+            @current_player = self.p2
+        else
+            @current_player = self.p1
+        end
+    end
+
+    def get_position
+        puts "Player of the #{@current_player.color.to_s} pieces, enter the four digits you would like to play"
+        digits = gets.chomp.split(' ').map(&:to_i)
+        raise "Sorry that was invalid" if digits.length != 4
+        digits
     end
 
     def print_board 
@@ -68,33 +84,64 @@ class Board
     def move_piece(row,col,target_row,target_col)
         pce = select_piece(row, col)
         target = [target_row,target_col]
-        if pce.possible_moves.include?(target)
-            if path_free?(pce.position, target) || pce.class == Knight
-                if target_free?(target[0],target[1])
-                    former_pos = pce.position
-                    pce.position = target
-                    self.grid[former_pos[0]][former_pos[1]] = '_'
-
-                elsif target_enemy?(pce,target[0],target[1])
-                    targ_pce = select_piece(target[0],target[1])
-                    if targ_pce.color == 'white'
-                        self.p2.captured_pieces << targ_pce
-                    else 
-                        self.p1.captured_pieces << targ_pce
+        if pce.class != Pawn
+            if pce.possible_moves.include?(target) || pce.possible_moves == target
+                if path_free?(pce.position, target) || pce.class == Knight
+                    if target_free?(target[0],target[1])
+                        former_pos = pce.position
+                        pce.position = target
+                        self.grid[former_pos[0]][former_pos[1]] = '_'
+                    elsif target_enemy?(pce,target[0],target[1])
+                        targ_pce = select_piece(target[0],target[1])
+                        if targ_pce.color == 'white'
+                            self.p1.pieces.delete(targ_pce)
+                            self.p2.captured_pieces << targ_pce
+                        else 
+                            self.p2.pieces.delete(targ_pce)
+                            self.p1.captured_pieces << targ_pce
+                        end
+                        targ_pce.position = nil #
+                        former_pos = pce.position
+                        pce.position = target
+                        self.grid[former_pos[0]][former_pos[1]] = '_'
+                    else
+                        raise "No can do, breh."
                     end
-                    targ_pce.position = nil
-                    former_pos = pce.position
-                    pce.position = target
-                    self.grid[former_pos[0]][former_pos[1]] = '_'
-                else
-                    raise "No can do, daddio."
                 end
+            end
+        else #logic to deal with pawn movements including diagonal kills
+            if pce.possible_moves == target || pce.possible_moves.include?(target) && target_free?(target_row, target_col) && path_free?(pce.position,target)
+                former_pos = pce.position
+                pce.position = target
+                self.grid[former_pos[0]][former_pos[1]] = '_'
+            elsif pawn_kill?(pce,target_row,target_col) && target_enemy?(pce, target_row, target_col)
+                targ_pce = select_piece(target[0],target[1])
+                if targ_pce.color == 'white'
+                    self.p1.pieces.delete(targ_pce)
+                    self.p2.captured_pieces << targ_pce
+                else 
+                    self.p2.pieces.delete(targ_pce)
+                    self.p1.captured_pieces << targ_pce
+                end
+                targ_pce.position = nil
+                former_pos = pce.position
+                pce.position = target
+                self.grid[former_pos[0]][former_pos[1]] = '_'
             end
         end
         self.player_pieces(p1)
         self.player_pieces(p2)
         pce.update_possible_moves
         self.print_board
+    end
+
+    def pawn_kill?(pce,target_row,target_col) #tells if target is killable by pawn [3,0] -> [4,1] - poss moves for [3,0] would be [4,0]
+        pce.possible_moves.each do |possible_move|
+            if possible_move[0] == target_row && possible_move[1]-1 == target_col|| possible_move[1]+1 == target_col
+                return true
+            end
+        end
+        return false
     end
 
     def path_free?(position, target)

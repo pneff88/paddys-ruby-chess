@@ -1,3 +1,4 @@
+
 class Pawn 
     attr_reader :color 
     attr_accessor :position, :unicode, :possible_moves
