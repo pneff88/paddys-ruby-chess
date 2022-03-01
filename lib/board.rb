@@ -15,10 +15,10 @@ class Board
     end
 
     def switch_turn
-        if @current_player = self.p1
-            @current_player = self.p2
-        else
-            @current_player = self.p1
+        if self.current_player == self.p1
+            self.current_player = self.p2
+        elsif self.current_player == self.p2
+            self.current_player = self.p1
         end
     end
 
@@ -132,6 +132,9 @@ class Board
         self.player_pieces(p1)
         self.player_pieces(p2)
         pce.update_possible_moves
+        if self.check? 
+            print 'CHECK!'
+        end
         self.print_board
     end
 
@@ -192,6 +195,29 @@ class Board
         return col != target_piece.color
     end
 
+    def select_king(player)
+        player.pieces.each do |piece|
+            if piece.class == King
+                return piece
+            end
+        end
+    end
 
+    def check?
+        if self.current_player == self.p1
+            enemy_king = select_king(p2)
+        else 
+            enemy_king = select_king(p1)
+        end
+        magic_spot = enemy_king.position
+        current_player.pieces.each do |piece|
+            if piece.possible_moves.include?(magic_spot) || piece.possible_moves == magic_spot
+                return true
+            end
+        end
+        return false
+    end
+
+    
 
 end

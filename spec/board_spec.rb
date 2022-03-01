@@ -92,6 +92,35 @@ describe Board do
         end
     end
 
+    describe '#switch_turn' do
+        context 'when board just initialized / p1 is current' do
+        subject(:default_board) { Board.new }
+            it 'changes turn to p2' do 
+                default_board.switch_turn
+                expect(default_board.current_player).to eq(default_board.p2)
+            end
+        end
+
+        context 'when swapped twice' do
+        subject(:default_board) { Board.new }
+            it 'should be p1' do
+                default_board.switch_turn
+                default_board.switch_turn
+                expect(default_board.current_player).to eq(default_board.p1)
+            end
+        end
+    end
+
+    describe 'check?' do
+        context 'when board is new' do
+        subject(:default_board) { Board.new }
+            it 'should return false' do
+                expect(default_board.check?).to eq(false)
+            end
+        end
+        
+    end
+
 
 
 end

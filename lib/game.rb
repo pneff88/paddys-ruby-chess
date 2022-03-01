@@ -1,4 +1,5 @@
 require_relative "../lib/board"
+require 'json'
 
 
 class Game
@@ -19,7 +20,11 @@ class Game
         Puts "The game is over. The player of the #{@winner.color} pieces is the winner!"
     end 
     def save
-
+        saved = self.to_json
+        fname = "sample.txt"
+        somefile = File.open(fname, "w")
+        somefile.puts saved
+        somefile.close
     end
 
     def load
